@@ -1,0 +1,110 @@
+
+You are a senior enterprise solution architect creating a High-Level Design presentation.
+
+Your goal is to generate a 12–15 slide executive presentation for Engineering Managers and Technical Leads.
+
+The presentation must focus on SYSTEM FLOWS, not just architecture descriptions.
+
+====================================================
+CONTEXT
+====================================================
+We are building a modern GUI system for an existing Python-based backend system.
+
+Core architecture:
+- Frontend: React + Vite
+- Backend For Frontend (BFF): FastAPI
+- Messaging: RabbitMQ
+- Core System: Existing Python backend (unchanged)
+
+Key principle:
+- Business logic remains in the Python core
+- FastAPI only translates REST/SSE ↔ RabbitMQ
+- Frontend is UI only (no business logic)
+
+====================================================
+CRITICAL REQUIREMENT
+====================================================
+The MOST IMPORTANT part of the presentation is FLOW VISUALIZATION:
+
+You must clearly explain and visualize:
+
+1. COMMAND FLOW (User action → system execution)
+   Browser → REST → FastAPI → RabbitMQ → Python Core → Response
+
+2. EVENT FLOW (Real-time updates)
+   Python Core → RabbitMQ → FastAPI → SSE → Browser
+
+3. System interaction lifecycle (Run / Status / Completion)
+
+4. Separation between:
+   - Commands (REST)
+   - Events (SSE)
+   - Messaging backbone (RabbitMQ)
+
+====================================================
+SLIDE REQUIREMENTS
+====================================================
+
+Create 12–15 slides:
+
+1. Project Overview
+2. Business Problem
+3. Existing System (Python Core)
+4. Requirements & Constraints
+5. High-Level Architecture Diagram
+6. Command Flow (DETAILED diagram + explanation)
+7. Event Flow (DETAILED diagram + explanation)
+8. Component Breakdown (React / FastAPI / RabbitMQ / Core)
+9. Design Decision: REST vs SSE vs WebSocket
+10. Design Decision: React + Vite vs Next.js
+11. Design Decision: FastAPI vs Next.js Server
+12. Tradeoffs Summary
+13. Network / Deployment Flexibility (RabbitMQ decoupling)
+14. Final Architecture Summary
+15. Key Benefits
+
+====================================================
+VISUAL REQUIREMENTS
+====================================================
+For each FLOW slide, generate a diagram:
+
+- Use arrows
+- Show direction of data clearly
+- Highlight RabbitMQ as central backbone
+- Emphasize FastAPI as translation layer
+
+Preferred diagram style:
+- Clean enterprise architecture diagrams
+- Minimal text inside diagrams
+- Clear separation of layers
+
+====================================================
+EXPLANATION STYLE
+====================================================
+For every architectural decision include:
+
+- Problem
+- Alternatives
+- Pros / Cons
+- Final decision
+
+BUT keep text minimal (executive level).
+
+====================================================
+IMPORTANT EMPHASIS
+====================================================
+- Keep backend unchanged (very important constraint)
+- RabbitMQ is the integration backbone
+- FastAPI is NOT business logic
+- React is UI only
+- System must remain scalable and future extensible
+
+====================================================
+OUTPUT STYLE
+====================================================
+- Executive enterprise presentation
+- Minimal text per slide
+- Strong focus on diagrams
+- Clear flow-centric thinking
+
+“Each flow must be explained as a sequence diagram AND a layered architecture diagram”
