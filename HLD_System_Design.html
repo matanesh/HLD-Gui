@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Level Design - מערכת פיקוד מבצעי</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root { --primary: #2563eb; --secondary: #475569; --success: #16a34a; --warning: #ca8a04; --danger: #dc2626; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --border: #e2e8f0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: var(--text); background-color: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: var(--card-bg); padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        h1 { color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 30px; }
+        h2 { color: var(--secondary); border-right: 4px solid var(--primary); padding-right: 15px; margin-top: 40px; }
+        h3 { color: var(--text); margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: right; }
+        th { background-color: var(--primary); color: white; }
+        tr:nth-child(even) { background-color: #f1f5f9; }
+        .card { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin: 20px 0; }
+        .decision-box { background: #ecfdf5; border: 1px solid var(--success); border-radius: 6px; padding: 20px; margin: 20px 0; position: relative; }
+        .decision-box::before { content: "✅ החלטה מתועדת"; position: absolute; top: -10px; right: 20px; background: var(--success); color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+        .warning-box { background: #fefce8; border: 1px solid var(--warning); border-radius: 6px; padding: 20px; margin: 20px 0; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; direction: ltr; display: inline-block; }
+        .flow-diagram { background: #0f172a; color: #e2e8f0; padding: 20px; border-radius: 6px; overflow-x: auto; margin: 20px 0; font-family: monospace; direction: ltr; text-align: left; }
+        .mermaid { background: white; padding: 20px; border-radius: 6px; text-align: center; }
+        .print-btn { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-weight: bold; }
+        .print-btn:hover { background: #1d4ed8; }
+        @media print { .print-btn { display: none; } body { background: white; } .container { box-shadow: none; padding: 0; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>תכנון ארכיטקטורי (HLD) - מערכת פיקוד מבצעי מודרנית</h1>
+        <p><strong>גרסה:</strong> 1.0 | <strong>תאריך:</strong> יולי 2, 2026 | <strong>מקבל:</strong> צוות הארכיטקטורה</p>
+
+        <div class="card">
+            <h3>📝 תקציר מנהלים</h3>
+            <p>מטרת הפרויקט היא בניית ממשק גרפי מודרני (GUI) למערכת ה-Python Core הקיימת, תוך שמירה על הלוגיקה העסקית הקיימת ושיפור חוויית המשתמש. הארכיטקטורה הנבחרת מבוססת על <strong>React + Vite</strong> בחזית, <strong>FastAPI</strong> כשכבת גישור (BFF), ו-<strong>RabbitMQ</strong> לתקשורת א-סינכרונית, עם עדכוני זמן אמת באמצעות <strong>SSE</strong>.</p>
+        </div>
+
+        <h2>1. מבנה המערכת והזרימה</h2>
+        
+        <h3>1.1 ארכיטקטורה כללית</h3>
+        <div class="mermaid">
+            graph TD
+                subgraph "שכבת חזית (Frontend)"
+                    React[React + Vite]
+                end
+                subgraph "שכבת גישור (BFF)"
+                    FastAPI[FastAPI Server]
+                end
+                subgraph "שכבת הודעות"
+                    RabbitMQ[RabbitMQ Broker]
+                end
+                subgraph "ליבת המערכת (Core)"
+                    Core[Python Core System]
+                end
+                React -->|REST Commands| FastAPI
+                FastAPI -->|Publish Commands| RabbitMQ
+                RabbitMQ -->|Consume| Core
+                Core -->|Publish Events| RabbitMQ
+                RabbitMQ -->|Consume Events| FastAPI
+                FastAPI -->|SSE Stream| React
+        </div>
+
+        <h3>1.2 Flow פקודה (Command)</h3>
+        <div class="flow-diagram">
+            משתמש → React → REST → FastAPI → RabbitMQ → Python Core
+                                                         ↓
+            משתמש ← סטטוס 200 (Command ID) ← FastAPI ← RabbitMQ ← Core
+        </div>
+
+        <h3>1.3 Flow אירועים (Event Streaming)</h3>
+        <div class="flow-diagram">
+            Python Core → Events → RabbitMQ → FastAPI → SSE → React (Live Update)
+        </div>
+
+        <h2>2. הצדקת בחירות טכנולוגיות (ADR)</h2>
+
+        <div class="decision-box">
+            <h3>🐍 למה FastAPI וללא Django או Node.js?</h3>
+            <p><strong>הסיבה:</strong> התאמה מושלמת ל-Python Core הקיים.</p>
+            <ul>
+                <li><strong>שיתוף קוד:</strong> ניתן לשתף מודלים (Pydantic), סוגים (Type Hints) ולוגיקת אימות ללא התאמות.</li>
+                <li><strong>ביצועים:</strong> תמיכה מובנית ב-async/await לטיפול באלפי חיבורי SSE במקביל.</li>
+                <li><strong>פשטות:</strong> קל יותר להטמעה מ-Django (כבד מדי ל-BFF טהור) ויעיל יותר מ-Flask.</li>
+                <li><strong>לא Node.js:</strong> אינו דורש כפילות של לוגיקה בשפות שונות. המערכת היא Python, ולכן Python BFF היא האופציה היעילה ביותר.</li>
+            </ul>
+        </div>
+
+        <div class="decision-box">
+            <h3>📊 האם יש מסד נתונים ב-BFF?</h3>
+            <p><strong>התשובה:</strong> <strong>לא.</strong> ה-BFF יישאר Stateless לחלוטין.</p>
+            <p><strong>ההסבר:</strong> תפקיד ה-BFF הוא רק תרגום והפצה. כל הנתונים נשמרים ב-Core או במאגרים ייעודיים אחרים. שמירת נתונים ב-BFF תיצור צומת כשל יחיד ותיקשה על Scaling.</p>
+        </div>
+
+        <div class="decision-box">
+            <h3>⚡ למה SSE ולא WebSocket?</h3>
+            <p><strong>ההשוואה:</strong></p>
+            <table>
+                <tr><th>היבט</th><th>פתרון נבחר (SSE)</th><th>אלטרנטיבה (WebSocket)</th></tr>
+                <tr><td>כיוון</td><td>חד-סטרי (שרת → לקוח) + REST לפקודות</td><td>דו-סטרי מלא</td></tr>
+                <tr><td>פשטות</td><td>HTTP סטנדרטי, קל ל-Debug ו-Proxy</td><td>פרוטוקול מיוחד, מורכב יותר לניהול</td></tr>
+                <tr><td>חסימות</td><td>פועל על כל ה-Firewalls/Proxies</td><td>עלול להיות חסום ב-Proxies ישנים</td></tr>
+                <tr><td>Reconnect</td><td>מובנה בדפדפן (Last-Event-ID)</td><td>דורש יישום ידני מורכב</td></tr>
+            </table>
+            <p><strong>מסקנה:</strong> מכיוון שאנחנו צריכים בעיקר עדכוני סטטוס לרוב, SSE הוא פתרון מינימליסטי, יציב וקל יותר לניטור.</p>
+        </div>
+
+        <h2>3. איתנות וטיפול בכשלים (Resilience)</h2>
+
+        <h3>3.1 מה קורה אם התקשורת נופלת?</h3>
+        <div class="warning-box">
+            <ul>
+                <li><strong>Reconnect אוטומטי:</strong> המנגנון ב-SSE מחדש את החיבור אוטומטית כשהקו מתנתק, ומאחזר את האירועים שנפספסו באמצעות Last-Event-ID.</li>
+                <li><strong>Fallback ידני:</strong> אם החיבור נכשל לאורך זמן (>30 שניות), הממשק יציג התראה "ניתוק חיבור" עם כפתור "רענון" ידני.</li>
+                <li><strong>ללא Polling מיותר:</strong> לא נבצע Polling רציף כדי לא להעמיס על השרת, אלא רק במקרה של כשל מתמשך.</li>
+            </ul>
+        </div>
+
+        <h3>3.2 איך מתמודדים עם עומס אירועים?</h3>
+        <p>אם ה-Core שולח אלפי אירועים בשנייה, ה-UI עלול לקרוס.</p>
+        <ul>
+            <li><strong>Debounce ב-Client:</strong> עדכוני UI יתארגנו כל 100-200ms (לא כל אירוע ירנדר מיד).</li>
+            <li><strong>Throttling ב-BFF:</strong> FastAPI יגביל את קצב השידור ל-Max 50 events/second למשתמש.</li>
+            <li><strong>עיבוד בולות:</strong> RabbitMQ יאפשר הפרדה בין Events קריטיים (אזהרות) ל-Events רגילים (לוגים), כך שראשית תתעדן על החשוב.</li>
+        </ul>
+
+        <h2>4. רכיבי צפי עתידי (Open Questions)</h2>
+        <div class="card">
+            <ul>
+                <li><strong>אימות (Authentication):</strong> עדיין לא מוגדר. מומלץ OAuth2 / JWT בשלב 2.</li>
+                <li><strong>מטמון (Caching):</strong> ניתן להוסיף Redis לנתונים נגישים מאוד אם יידרש.</li>
+                <li><strong>לוגים ו-Audit:</strong> האם לשמור את כל הלוגים במאגר מיוחד (ELK) או רק להציג אותם בזמן אמת?</li>
+            </ul>
+        </div>
+
+        <h2>5. סיכום</h2>
+        <p>הארכיטקטורה הנבחרת היא פתרון מינימליסטי, יציב וקל לטיפול: <strong>React + FastAPI + RabbitMQ + SSE</strong>. היא מנצלת את יתרונות ה-Python הקיים, מונעת כפילות, ומספקת חוויית משתמש חיה ויציבה תוך התמודדות עם כשלים ותרגול.</p>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">🖨️ הדפס / שמור כ-PDF</button>
+
+    <script>mermaid.initialize({ startOnLoad: true, theme: 'default' });</script>
+</body>
+</html>
